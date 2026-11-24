@@ -184,7 +184,7 @@ Rules:
 - `horses` is one of `own_only`, `own_or_loan` or `none`. A client that does not recognise a value prints nothing about horses.
 - `fee` is per rider and `loan_horse_fee` per loan horse. Both are regular prices, gross under the envelope's `currency` and `prices_include_tax`. `loan_horse_fee` is `null` unless the Clinic takes loan horses. In-house prices are not published.
 - **`signup` is a state, never a count.** It is one of `not_yet_open`, `open`, `waitlist`, `full` or `closed`. HestaHub computes it from the signup window, the Waitlist and the places taken. A Clinic that has begun may still be `open`. A client that does not recognise a value treats it as `closed` for any call to action and prints no state. Places left and the maximum are not published.
-- `signup_opens_at` is `null` when signups have no set opening. `signup_closes_at` is the **effective** close, already resolved. A client never computes it.
+- `signup_opens_at` is `null` when signups have no set opening. `signup_closes_at` is the **effective** close, already resolved. A client never computes it. Signups open at the start of their first day and close at the end of their last. A Clinic without a set signup end closes at its start, and its `signup` reads `closed` from the start day on.
 - `apartment_guests_only` says that only people staying in one of the Tenant's Apartments may sign up.
 - `portal_url` follows the Apartment rule above.
 
