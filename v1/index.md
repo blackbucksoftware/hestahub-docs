@@ -270,10 +270,18 @@ A **test connection** action calls `meta` live, bypassing the cache. It reports 
 
 ### Templates and hooks
 
-The plugin's templates are as public as the wire. A theme may override any of them by copying it into `<theme>/hestahub/`.
+The plugin's templates are as public as the wire. A theme may override any of them by copying it into `<theme>/hestahub/`. The plugin looks in the child theme, then the parent theme, then its own folder.
 
-- The plugin ships six templates: Apartment listing, Apartment single, a rate-table partial, a calendar partial, Clinic listing and Clinic single.
-- **A template's variables are contract. Its markup is not.** Each template's variables are the wire objects it renders, passed as associative arrays exactly as received: `$apartments`/`$apartment`, `$apartment['pricing']` for the rate table, the Apartment's availability entry plus the window for the calendar, and `$clinics`/`$clinic`. That is why this document has no separate template field list: the schema is the list, and any change to the wire's promise is a change to the templates' promise under the same Revision.
+- **Content templates.** The plugin ships six: Apartment listing, Apartment single, a rate-table partial, a calendar partial, Clinic listing and Clinic single.
+- **A content template's variables are contract. Its markup is not.** Each content template's variables are the wire objects it renders, passed as associative arrays exactly as received: `$apartments`/`$apartment`, `$apartment['pricing']` for the rate table, the Apartment's availability entry plus the window for the calendar, and `$clinics`/`$clinic`. That is why this document has no separate template field list: the schema is the list, and any change to the wire's promise is a change to the templates' promise under the same Revision.
+- **The page shell.** On an owned route (`<base>` and `<base>/<slug>`), the plugin prints the page around the content with its shell, `shell.php`: the theme's header, the content and the theme's footer. A theme MAY override the shell to put the content into its own layout: columns, a sidebar, wrappers. The shell has no variables. A theme's shell MUST call `hestahub_content()` exactly once, where the content belongs, and MUST call `get_header()` and `get_footer()`.
+- **The shell changes the page, never the answer.** The status, the headers and the `<head>` entries the plugin adds are the same under any shell.
+- **A shell that never calls `hestahub_content()`.** The plugin prints the content immediately before the theme's footer and reports the mistake to developers (`_doing_it_wrong()`). This fallback keeps a mistake from emptying a page. It is not a layout to rely on, and a shell that never calls `get_footer()` gets none.
+- **The pages without data are the plugin's own.** What a route shows on the ladder (the "temporarily unavailable" body, the placeholder) cannot be overridden: what it says is part of how the plugin escalates. It renders through whatever shell is in use.
+- **Template tags**, with their names and arguments, are contract on the same terms as the templates:
+  - `hestahub_render( $template, $args )` prints one of the six content templates anywhere on the site
+  - `hestahub_get( $template, $args )` returns a content template's variables and prints nothing
+  - `hestahub_content()`, in the page shell only, prints the owned route's content: its content template with the wire objects, or the plugin's own page without data. Outside an owned route it prints nothing.
 - Named action hooks, with their names and arguments, are contract on the same terms. The plugin fires each hook after the main content of the template named in it, passing the object(s) shown:
   - `hestahub_after_apartment_listing` (`$apartments`)
   - `hestahub_after_apartment` (`$apartment`)
@@ -327,14 +335,15 @@ Template variables and hook names and arguments follow the same list.
 
 ### What enforces this
 
-Each Revision's schemas are hand-written as the promise; examples are generated. CI asserts:
+Each Revision's schemas are hand-written as the promise. Its examples are generated from live responses for a fixture Tenant, so their data, dates included, changes whenever they are regenerated. They promise nothing. The suite asserts:
 
-- that every example validates against its schema
+- that every example validates against its schema, and has the same shape as the live response
 - that a live response validates against the current Revision's schema
-- that no `required` key disappears and no type changes between one Revision's schemas and the next
-- that the app's Revision constant, the top revision-history entry and the newest tag agree with the newest directory
+- that the app's Revision constant names a Revision directory, because the schema checks read their schemas from it
 
-The plugin's suite vendors the schemas, and fails if its vendored copy differs from the published one for the Revision it claims.
+Not yet enforced, and owed before this contract binds: that no `required` key disappears and no type changes between one Revision's schemas and the next; that the app's Revision constant, the top revision-history entry and the newest tag agree with the newest directory.
+
+The plugin's suite vendors the schemas, and fails if its vendored copy differs from the published one for the Revision it claims. It does not compare examples.
 
 ### Retirement
 
@@ -350,4 +359,4 @@ v1 has no scheduled death.
 
 | Revision | Changes |
 |---|---|
-| `2026-11-23` | First draft: `meta`, `apartments`, `availability`, `clinics`. Not yet binding. |
+| `2026-11-23` | First draft: `meta`, `apartments`, `availability`, `clinics`. Not yet binding. Amended in place on 2026-11-25, which the draft status allows: the plugin's page shell is overridable, with the template tag `hestahub_content()`; `hestahub_render()` and `hestahub_get()` are listed as contract. |
